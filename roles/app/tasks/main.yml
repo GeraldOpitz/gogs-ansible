@@ -1,0 +1,76 @@
+- name: Ensure git user exists
+  user:
+    name: git
+    shell: /bin/bash
+    create_home: yes
+  become: true
+
+- name: Stop any running Gogs service
+  shell: "pkill -f '/opt/gogs/gogs web' || true"
+  become: true
+  ignore_errors: true
+
+- name: Remove old app directory
+  file:
+    path: "{{ app_dir }}"
+    state: absent
+  become: true
+
+- name: Create app directory
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: git
+    group: git
+    mode: "0755"
+  become: true
+
+- name: Ensure git is installed
+  apt:
+    name: git
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Checkout application repo
+  git:
+    repo: "{{ app_repo_url }}"
+    dest: "{{ app_dir }}"
+    version: "{{ app_checkout }}"
+    force: true
+    update: yes
+  become: true
+  become_user: git
+
+- name: Install Go
+  unarchive:
+    src: "https://go.dev/dl/go{{ go_version }}.linux-amd64.tar.gz"
+    dest: /usr/local
+    remote_src: yes
+  become: true
+
+- name: Add Go to PATH (system-wide)
+  lineinfile:
+    path: /etc/profile
+    regexp: 'export PATH=.*go/bin'
+    line: 'export PATH=$PATH:/usr/local/go/bin'
+    state: present
+  become: true
+
+- name: Build Gogs binary
+  command: go build -o gogs
+  args:
+    chdir: "{{ app_dir }}"
+  become: true
+  become_user: git
+  environment:
+    PATH: "/usr/local/go/bin:{{ ansible_env.PATH }}"
+
+- name: Run Gogs in background
+  shell: "nohup {{ app_dir }}/gogs web > {{ app_dir }}/gogs.log 2>&1 &"
+  args:
+    chdir: "{{ app_dir }}"
+  become: true
+  become_user: git
+  environment:
+    PATH: "/usr/local/go/bin:{{ ansible_env.PATH }}"

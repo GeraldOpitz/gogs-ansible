@@ -1,0 +1,9 @@
+project_name : gogs-ansible
+app_repo_url : "https://github.com/GeraldOpitz/gogs-demo3.git"
+app_checkout : "main"
+app_dir: "/opt/gogs"
+app_user: "gogs"
+app_service_name: "gogs-demo3"
+app_port: 5000
+app_binary: "gogs"
+go_version: "1.21.6"
