@@ -1,24 +1,15 @@
-- name: Ensure git user exists
-  user:
-    name: git
-    shell: /bin/bash
-    create_home: yes
-  become: true
-
 - name: Remove old app directory
   file:
     path: "{{ app_dir }}"
     state: absent
-  become: true
 
 - name: Create app directory
   file:
     path: "{{ app_dir }}"
     state: directory
-    owner: git
-    group: git
+    owner: root
+    group: root
     mode: "0755"
-  become: true
 
 - name: Ensure git is installed
   apt:
@@ -34,8 +25,6 @@
     version: "{{ app_checkout }}"
     force: true
     update: yes
-  become: true
-  become_user: git
 
 - name: Install Go
   unarchive:
@@ -48,8 +37,6 @@
   command: go build -o gogs
   args:
     chdir: "{{ app_dir }}"
-  become: true
-  become_user: git
   environment:
     PATH: "/usr/local/go/bin:{{ ansible_env.PATH }}"
 
@@ -57,7 +44,5 @@
   shell: "nohup {{ app_dir }}/gogs web > {{ app_dir }}/gogs.log 2>&1 &"
   args:
     chdir: "{{ app_dir }}"
-  become: true
-  become_user: git
   environment:
     PATH: "/usr/local/go/bin:{{ ansible_env.PATH }}"
