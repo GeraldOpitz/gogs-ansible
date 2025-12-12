@@ -5,11 +5,6 @@
     create_home: yes
   become: true
 
-- name: Stop any running Gogs service
-  shell: "pkill -f '/opt/gogs/gogs web' || true"
-  become: true
-  ignore_errors: true
-
 - name: Remove old app directory
   file:
     path: "{{ app_dir }}"
@@ -49,14 +44,6 @@
     remote_src: yes
   become: true
 
-- name: Add Go to PATH (system-wide)
-  lineinfile:
-    path: /etc/profile
-    regexp: 'export PATH=.*go/bin'
-    line: 'export PATH=$PATH:/usr/local/go/bin'
-    state: present
-  become: true
-
 - name: Build Gogs binary
   command: go build -o gogs
   args:
@@ -66,7 +53,7 @@
   environment:
     PATH: "/usr/local/go/bin:{{ ansible_env.PATH }}"
 
-- name: Run Gogs in background
+- name: Run Gogs in background using nohup
   shell: "nohup {{ app_dir }}/gogs web > {{ app_dir }}/gogs.log 2>&1 &"
   args:
     chdir: "{{ app_dir }}"
