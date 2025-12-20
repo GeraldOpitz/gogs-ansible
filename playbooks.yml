@@ -1,5 +1,11 @@
-- name: Deploy gogs application
+- name: Deploy gogs application on ec2
   hosts: ec2
+  become: true
+  roles:
+    - app
+
+- name: Deploy gogs application on VM
+  hosts: vm
   become: true
   roles:
     - app
