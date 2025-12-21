@@ -3,9 +3,3 @@
   become: true
   roles:
     - app
-
-- name: Deploy gogs application on VM
-  hosts: vm
-  become: true
-  roles:
-    - app
