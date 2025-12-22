@@ -1,0 +1,50 @@
+- name: Remove old app directory
+  file:
+    path: "{{ app_dir }}"
+    state: absent
+
+- name: Create app directory
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Ensure git is installed
+  apt:
+    name: git
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Checkout application repo
+  git:
+    repo: "{{ app_repo_url }}"
+    dest: "{{ app_dir }}"
+    version: "{{ app_checkout }}"
+    force: true
+    update: yes
+
+- name: Install Go
+  unarchive:
+    src: "https://go.dev/dl/go{{ go_version }}.linux-amd64.tar.gz"
+    dest: /usr/local
+    remote_src: yes
+  become: true
+
+- name: Build Gogs binary
+  command: go build -o gogs
+  args:
+    chdir: "{{ app_dir }}"
+  environment:
+    PATH: "/usr/local/go/bin:{{ ansible_env.PATH }}"
+
+- name: Run Gogs in background using nohup
+  shell: "nohup {{ app_dir }}/gogs web > {{ app_dir }}/gogs.log 2>&1 &"
+  args:
+    chdir: "{{ app_dir }}"
+  environment:
+    PATH: "/usr/local/go/bin:{{ ansible_env.PATH }}"
+  become: true
+  become_user: root
